@@ -12,134 +12,130 @@
 #
 {SerialPort} = require 'serialport'
 async = require 'async'
-_ = require 'lodash'
+
+
+class IrMagicianClient extends SerialPort
+  constructor: ->
+    super '/dev/ttyACM0', { baudrate: 9600 }
+
+  capture: (done) ->
+    @write 'c\r\n', (err) =>
+      return done err if err
+
+      @once 'data', (buffer) =>
+        #assert buffer.toString() is '...'
+        @once 'data', (buffer) =>
+          done null, buffer.toString()
+
+  play: (done) ->
+    @write 'p\r\n', (err) =>
+      return done err if err
+
+      @once 'data', (buffer) =>
+        #assert buffer.toString() is '...'
+        @once 'data', (buffer) =>
+          #assert buffer.toString() is ' Done !'
+          done null, buffer.toString()
+
+  information: (n, done) ->
+    @write "I,#{n}\r\n", (err) =>
+      return done err if err
+
+      @once 'data', (buffer) =>
+        done null, buffer.toString()
+
+  setBank: (n, done) ->
+    @write "b,#{n}\r\n", done
+
+  dumpMemory: (pos, done) ->
+    @write "d,#{pos}\r\n", (err) =>
+      return done err if err
+      @once 'data', (buffer) =>
+        done null, (parseInt buffer.toString(), 16)
+
+  setRecordPointer: (recNumber, done) ->
+    @write "n,#{recNumber}\r\n", (err) =>
+      return done err if err
+      @once 'data', (buffer) =>
+        #assert buffer.toString() is 'OK'
+        done null, buffer.toString()
+
+  setPostScaler: (postScale, done) ->
+    @write "k,#{postScale}\r\n", (err) =>
+      return done err if err
+      @once 'data', (buffer) =>
+        #assert buffer.toString() is 'OK'
+        done null, buffer.toString()
+
+  writeData: (pos, data, done) ->
+    @write "w,#{pos},#{data}\r\n", done
+
+
+  save: (done) ->
+    async.series
+      recNumber: (done) => @information 1, done
+      postScale: (done) => @information 6, done
+    , (err, result) =>
+      return done err if err
+
+      recNumber = parseInt result.recNumber, 16
+      postScale = parseInt result.postScale, 10
+
+      rawX = []
+      tasks = []
+      [0..recNumber-1].forEach (i) =>
+        bank = i / 64
+        pos = i % 64
+        if pos is 0
+          tasks.push (done) => @setBank bank, done
+        tasks.push (done) => @dumpMemory pos, (err, result) ->
+          return done err if err
+          rawX.push result
+          done()
+
+      async.series tasks, (err) ->
+        return done err if err
+        done null,
+          format   : 'raw'
+          freq     : 38
+          data     : rawX
+          postscale: postScale
+
+
+  load: (data, done) ->
+    tasks = []
+    tasks.push (done) => @setRecordPointer data.data.length, done
+    tasks.push (done) => @setPostScaler data.postscale, done
+
+    [0..data.data.length - 1].forEach (i) =>
+      bank = i / 64
+      pos = i % 64
+      if pos is 0
+        tasks.push (done) => @setBank bank, done
+      tasks.push (done) => @writeData pos, data.data[i], done
+    tasks.push (done) => @play done
+
+    async.series tasks, done
+
 
 module.exports = (robot) ->
-  irMagician = new SerialPort '/dev/ttyACM0', { baudrate: 9600 }
-
-  block = false
+  irMagician = new IrMagicianClient
 
   irMagician.on 'open', ->
     robot.hear /^c(apture)?$/, (msg) ->
-      return if block
-      block = true
-      irMagician.write 'c\r\n', (err)->
-        if err
-          block = false
-          msg.send err
-          return
+      irMagician.capture (err, result) ->
+        msg.send err, result
 
-        irMagician.once 'data', (buffer)->
-          msg.send buffer.toString()
-          irMagician.once 'data', (buffer)->
-            msg.send buffer.toString()
-            block = false
+    robot.hear /^p(lay)?$/, (msg) ->
+      irMagician.play (err, result) ->
+        msg.send err, result
 
-    robot.hear /^p(lay)?$/, (msg)->
-      return if block
-      block = true
-      irMagician.write 'p\r\n', (err)->
-        if err
-          block = false
-          msg.send err
-          return
+    robot.hear /^save$/, (msg) ->
+      irMagician.save (err, result) ->
+        msg.send JSON.stringify result
 
-        irMagician.once 'data', (buffer)->
-          msg.send buffer.toString()
-          irMagician.once 'data', (buffer)->
-            msg.send buffer.toString()
-            block = false
-
-
-    robot.hear /save/, (msg)->
-      async.series
-        recNumber: (done) ->
-          irMagician.write 'I,1\r\n', (err)->
-            return done err if err
-
-            irMagician.once 'data', (buffer)->
-              recNumber = parseInt buffer.toString(), 16
-              done null, recNumber
-
-        postScale: (done) ->
-          irMagician.write 'I,6\r\n', (err)->
-            return done err if err
-
-            irMagician.once 'data', (buffer)->
-              postScale = parseInt buffer.toString(), 10
-              done null, postScale
-      , (err, result) ->
-        return if err
-
-        rawX = []
-        tasks = []
-        [0..result.recNumber-1].forEach (i)->
-          bank = i / 64
-          pos = i % 64
-
-          if pos is 0
-            tasks.push _.bindKey irMagician, 'write', "b,#{bank}\r\n"
-
-          tasks.push (done)->
-            irMagician.write "d,#{pos}\r\n", (err)->
-              return done err if err
-              irMagician.once 'data', (buffer)->
-                rawX.push parseInt buffer.toString(), 16
-                done null
-        async.series tasks, (err)->
-          msg.send JSON.stringify
-            format   : 'raw'
-            freq     : 38
-            data     : rawX
-            postscale: result.postScale
-
-    robot.hear /^load (.+)$/, (msg)->
+    robot.hear /^load (.+)$/, (msg) ->
       data = JSON.parse msg.match[1]
 
-      tasks = []
-      tasks.push (done)->
-        irMagician.write "n,#{data.data.length}\r\n", (err)->
-          done err if err
-          irMagician.once 'data', (buffer)->
-            msg.send buffer.toString()
-            done null
-
-      tasks.push (done)->
-        irMagician.write "k,#{data.postscale}\r\n", (err)->
-          done err if err
-          irMagician.once 'data', (buffer)->
-            msg.send buffer.toString()
-            done null
-
-      [0..data.data.length-1].forEach (i)->
-        bank = i / 64
-        pos = i % 64
-
-        if (pos is 0)
-          tasks.push (done)->
-            irMagician.write "b,#{bank}\r\n", (err)->
-              return done err if err
-              done null
-
-
-        tasks.push (done)->
-          irMagician.write "w,#{pos},#{data.data[i]}\r\n", (err)->
-            return done err if err
-            done null
-
-      tasks.push (done)->
-        irMagician.write 'p\r\n', (err)->
-          return done err if err
-          irMagician.once 'data', (buffer)->
-            msg.send buffer.toString()
-            done null
-
-      async.series tasks, (err, results)->
-        return
-
-  # debug
-  irMagician.on 'data', (buffer)->
-    console.log buffer.toString()
-
-  irMagician.drain ->
-    console.log 'drain'
+      irMagician.load data, (err, result) ->
+        msg.send result
