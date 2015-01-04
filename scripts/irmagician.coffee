@@ -12,7 +12,7 @@
 #
 {SerialPort} = require 'serialport'
 async = require 'async'
-
+config = require 'config'
 
 class IrMagicianClient extends SerialPort
   constructor: ->
@@ -139,3 +139,15 @@ module.exports = (robot) ->
 
       irMagician.load data, (err, result) ->
         msg.send result
+
+    robot.router.get '/send/:id', (req, res) ->
+      res.set
+        'Content-Type': 'application/json'
+
+      id = req.params.id
+
+      if config.ir[id]?
+        irMagician.load config.ir[id], (err, result) ->
+          res.status(200).end JSON.stringify {id:id}
+      else
+        res.status(404).end JSON.stringify {}
