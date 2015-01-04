@@ -130,6 +130,10 @@ module.exports = (robot) ->
       irMagician.play (err, result) ->
         msg.send err, result
 
+    robot.hear /^k (.+)$/, (msg) ->
+      irMagician.setPostScaler msg.match[1], (err, result) ->
+        msg.send err, result
+
     robot.hear /^save$/, (msg) ->
       irMagician.save (err, result) ->
         msg.send JSON.stringify result
