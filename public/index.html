@@ -3,49 +3,103 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+  <script>
+    jQuery(function($) {
+      $('button').each(function() {
+        $(this).on('click', function() {
+          $.get('/send/' + $(this).attr('data-command'));
+        });
+      });
+    });
+  </script>
 </head>
 <body>
   <div class="container">
     <h1>照明</h1>
-    <a href="/send/light_on" target="hiddenFrame">
-      <button type="button" class="btn btn-default">on</button>
-    </a>
-    <a href="/send/light_off" target="hiddenFrame">
-      <button type="button" class="btn btn-default">off</button>
-    </a>
-    <a href="/send/light_up" target="hiddenFrame">
-      <button type="button" class="btn btn-default">↑明るく</button>
-    </a>
-    <a href="/send/light_down" target="hiddenFrame">
-      <button type="button" class="btn btn-default">↓暗く</button>
-    </a>
-    <a href="/send/light_white" target="hiddenFrame">
-      <button type="button" class="btn btn-default">白い色</button>
-    </a>
-    <a href="/send/light_warm" target="hiddenFrame">
-      <button type="button" class="btn btn-default">暖かい色</button>
-    </a>
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-default" data-command="light_on">
+        <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span> on
+      </button>
+      <button type="button" class="btn btn-default" data-command="light_off">
+        <span class="glyphicon glyphicon-minus-sign" aria-hidden="true"></span> off
+      </button>
+    </div>
+
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-default" data-command="light_up">
+        <span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span> 明るく
+      </button>
+      <button type="button" class="btn btn-default" data-command="light_down">
+        <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span> 暗く
+      </button>
+    </div>
+
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-default" data-command="light_white">
+        <span class="glyphicon glyphicon-star" aria-hidden="true"></span> 白い色
+      </button>
+      <button type="button" class="btn btn-default" data-command="light_warm">
+        <span class="glyphicon glyphicon-star" aria-hidden="true"></span> 暖かい色
+      </button>
+    </div>
 
     <h1>テレビ</h1>
-    <a href="/send/tv_on_off" target="hiddenFrame">
-      <button type="button" class="btn btn-default">on/off</button>
-    </a>
-    <a href="/send/tv_change_input" target="hiddenFrame">
-      <button type="button" class="btn btn-default">入力切替</button>
-    </a>
-    <a href="/send/tv_volume_up" target="hiddenFrame">
-      <button type="button" class="btn btn-default">音量+</button>
-    </a>
-    <a href="/send/tv_volume_down" target="hiddenFrame">
-      <button type="button" class="btn btn-default">音量-</button>
-    </a>
-    <a href="/send/tv_channel_up" target="hiddenFrame">
-      <button type="button" class="btn btn-default">チャンネル↑</button>
-    </a>
-    <a href="/send/tv_channel_down" target="hiddenFrame">
-      <button type="button" class="btn btn-default">チャンネル↓</button>
-    </a>
+    <button type="button" class="btn btn-default" data-command="tv_on_off">
+      <span class="glyphicon glyphicon-off" aria-hidden="true"></span> on/off
+    </button>
+    <button type="button" class="btn btn-default" data-command="tv_change_input">
+      <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> 入力切替
+    </button>
+
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-default" data-command="tv_volume_up">
+        <span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span> 音量
+      </button>
+      <button type="button" class="btn btn-default" data-command="tv_volume_down">
+        <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span> 音量
+      </button>
+    </div>
+
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-default" data-command="tv_channel_up">
+        <span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span> チャンネル
+      </button>
+      <button type="button" class="btn btn-default" data-command="tv_channel_down">
+        <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span> チャンネル
+      </button>
+    </div>
+
+    <button type="button" class="btn btn-default" data-command="tv_bangumi">
+      <span class="glyphicon glyphicon glyphicon-th" aria-hidden="true"></span> 番組表
+    </button>
+
+    <button type="button" class="btn btn-default" data-command="tv_rec_list">
+      <span class="glyphicon glyphicon-film" aria-hidden="true"></span> 録画一覧
+    </button>
+
+    <button type="button" class="btn btn-default" data-command="tv_enter">
+      <span class="glyphicon glyphicon-ok" aria-hidden="true"></span> 決定
+    </button>
+
+    <button type="button" class="btn btn-default" data-command="tv_cancel">
+      <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> 戻る
+    </button>
+
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-default" data-command="tv_cursor_up">
+        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+      </button>
+      <button type="button" class="btn btn-default" data-command="tv_cursor_down">
+        <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>
+      </button>
+      <button type="button" class="btn btn-default" data-command="tv_cursor_left">
+        <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+      </button>
+      <button type="button" class="btn btn-default" data-command="tv_cursor_right">
+        <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
+      </button>
+    </div>
   </div>
-  <iframe name="hiddenFrame" style="display:none;"></iframe>
 </body>
 </html>

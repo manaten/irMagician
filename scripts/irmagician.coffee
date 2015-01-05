@@ -44,6 +44,9 @@ class IrMagicianClient extends SerialPort
       @once 'data', (buffer) =>
         done null, buffer.toString()
 
+  setLED: (n, done) ->
+    @write "l,#{n}\r\n", done
+
   setBank: (n, done) ->
     @write "b,#{n}\r\n", done
 
@@ -128,6 +131,10 @@ module.exports = (robot) ->
 
     robot.hear /^p(lay)?$/, (msg) ->
       irMagician.play (err, result) ->
+        msg.send err, result
+
+    robot.hear /^l(ed)? ([01])$/, (msg) ->
+      irMagician.setLED msg.match[1], (err, result) ->
         msg.send err, result
 
     robot.hear /^k (.+)$/, (msg) ->
