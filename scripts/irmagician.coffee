@@ -16,7 +16,8 @@ config = require 'config'
 
 class IrMagicianClient extends SerialPort
   constructor: ->
-    super '/dev/ttyACM0', { baudrate: 9600 }
+    super '/dev/ttyACM0',
+      baudrate: 9600
 
   capture: (done) ->
     @write 'c\r\n', (err) =>
@@ -123,6 +124,9 @@ class IrMagicianClient extends SerialPort
 
 module.exports = (robot) ->
   irMagician = new IrMagicianClient
+
+  irMagician.on 'data', (buffer) ->
+    console.log 'data:', buffer.toString()
 
   irMagician.on 'open', ->
     robot.hear /^c(apture)?$/, (msg) ->
