@@ -131,19 +131,19 @@ module.exports = (robot) ->
   irMagician.on 'open', ->
     robot.hear /^c(apture)?$/, (msg) ->
       irMagician.capture (err, result) ->
-        msg.send err, result
+        msg.send result
 
     robot.hear /^p(lay)?$/, (msg) ->
       irMagician.play (err, result) ->
-        msg.send err, result
+        msg.send result
 
     robot.hear /^l(ed)? ([01])$/, (msg) ->
       irMagician.setLED msg.match[1], (err, result) ->
-        msg.send err, result
+        msg.send result
 
     robot.hear /^k (.+)$/, (msg) ->
       irMagician.setPostScaler msg.match[1], (err, result) ->
-        msg.send err, result
+        msg.send result
 
     robot.hear /^save$/, (msg) ->
       irMagician.save (err, result) ->
